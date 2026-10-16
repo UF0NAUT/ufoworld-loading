@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!--
+  Loading Screen (UFOWORLD)
+  Host this file together with bg.jpg (your background picture) on any web host,
+  then point the addon's ufo_loadingurl at it.
+  Written in old-browser-safe HTML/CSS/JS so it works on both GMod branches
+  (Awesomium on the default branch, Chromium on x86-64).
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>UFO WORLD</title>
+<link href="https://fonts.googleapis.com/css?family=Rajdhani:600,700" rel="stylesheet">
+<style>
+  /* ===== easy settings ===== */
+  /* background picture file: change bg.jpg below if you name it differently */
+
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #07080c;
+    font-family: 'Rajdhani', 'Arial Narrow', Arial, sans-serif;
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* background picture with a slow GTA-style drift/zoom */
+  #bg {
+    position: absolute;
+    left: -2%; top: -2%; width: 104%; height: 104%;
+    background: #07080c url('bg.jpg') center center no-repeat;
+    background-size: cover;
+    -webkit-animation: drift 40s ease-in-out infinite alternate;
+            animation: drift 40s ease-in-out infinite alternate;
+  }
+  @-webkit-keyframes drift {
+    0%   { -webkit-transform: scale(1.00) translate(0, 0); }
+    100% { -webkit-transform: scale(1.08) translate(-1.5%, -1%); }
+  }
+  @keyframes drift {
+    0%   { transform: scale(1.00) translate(0, 0); }
+    100% { transform: scale(1.08) translate(-1.5%, -1%); }
+  }
+
+  /* darkening so the bottom-right text always reads */
+  #shade {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+  }
+  #shade2 {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: -webkit-radial-gradient(center, ellipse cover, rgba(0,0,0,0) 55%, rgba(0,0,0,0.45) 100%);
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.45) 100%);
+  }
+
+  /* fade the whole screen in from black */
+  #fade {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    background: #000;
+    opacity: 0;
+    -webkit-animation: fadein 1.6s ease-out;
+            animation: fadein 1.6s ease-out;
+  }
+  @-webkit-keyframes fadein { 0% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes fadein         { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ===== bottom-right GTA Online style loader ===== */
+  #loader {
+    position: absolute;
+    right: 3.2%;
+    bottom: 4.5%;
+    text-align: right;
+    white-space: nowrap;
+  }
+  #status {
+    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0 50px 4px 0;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    height: 18px;
+    overflow: hidden;
+  }
+  #title {
+    display: inline-block;
+    vertical-align: middle;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.85);
+    line-height: 34px;
+  }
+  #spinner {
+    display: inline-block;
+    vertical-align: middle;
+    width: 24px; height: 24px;
+    margin-left: 16px;
+    border: 3px solid rgba(255,255,255,0.95);
+    border-right-color: transparent;
+    border-radius: 50%;
+    -webkit-box-shadow: 0 0 6px rgba(0,0,0,0.6);
+            box-shadow: 0 0 6px rgba(0,0,0,0.6);
+    -webkit-animation: spin 0.9s linear infinite;
+            animation: spin 0.9s linear infinite;
+  }
+  @-webkit-keyframes spin { 0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); } }
+  @keyframes spin         { 0% { transform: rotate(0deg); }         100% { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div id="shade"></div>
+  <div id="shade2"></div>
+
+  <div id="loader">
+    <div id="status"></div>
+    <span id="title">UFO WORLD</span><span id="spinner"></span>
+  </div>
+
+  <div id="fade"></div>
+
+<script>
+  // ===== easy settings =====
+  var SHOW_STATUS = true;   // false = only "UFO WORLD" + spinner, no small status line
+
+  var statusEl = document.getElementById('status');
+  var filesTotal = 0;
+  var filesNeeded = 0;
+
+  function setStatus(text) {
+    if (!SHOW_STATUS) return;
+    statusEl.textContent = text || '';
+  }
+
+  // ---- functions Garry's Mod calls while you join ----
+  window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+    setStatus('Connecting');
+  };
+
+  window.SetFilesTotal = function (total) {
+    filesTotal = total;
+  };
+
+  window.SetFilesNeeded = function (needed) {
+    filesNeeded = needed;
+  };
+
+  window.DownloadingFile = function (fileName) {
+    filesNeeded = Math.max(filesNeeded - 1, 0);
+    if (filesTotal > 0) {
+      setStatus('Downloading ' + (filesTotal - filesNeeded) + ' / ' + filesTotal);
+    } else {
+      setStatus('Downloading');
+    }
+  };
+
+  window.SetStatusChanged = function (status) {
+    // GMod sends things like "Retrieving server info...", "Mounting Addons"
+    status = (status || '').replace(/\.+$/, '');
+    setStatus(status);
+  };
+</script>
+</body>
+</html>
