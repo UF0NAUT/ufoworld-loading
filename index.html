@@ -126,9 +126,51 @@
 
   <div id="fade"></div>
 
+  <!-- loading music: upload music.ogg (works everywhere) and/or music.mp3 next to this file -->
+  <audio id="music" loop preload="auto">
+    <source src="music.ogg" type="audio/ogg">
+    <source src="music.mp3" type="audio/mpeg">
+  </audio>
+
 <script>
   // ===== easy settings =====
   var SHOW_STATUS = false;  // true = show the small status line above "UFO WORLD"
+  var MUSIC_VOLUME = 0.5;   // 0.0 - 1.0 (scaled by the player's own GMod volume)
+  var MUSIC_FADE_IN = 3;    // seconds of fade-in at the start
+
+  // ---- music ----
+  var music = document.getElementById('music');
+  var musicTarget = MUSIC_VOLUME;
+  var musicStarted = false;
+
+  function startMusic() {
+    if (musicStarted || !music) return;
+    musicStarted = true;
+    try {
+      music.volume = 0;
+      var p = music.play();
+      if (p && p['catch']) p['catch'](function () { musicStarted = false; });
+    } catch (e) { musicStarted = false; return; }
+
+    var steps = Math.max(MUSIC_FADE_IN * 20, 1);
+    var i = 0;
+    var t = setInterval(function () {
+      i++;
+      try { music.volume = Math.min(musicTarget * (i / steps), 1); } catch (e) {}
+      if (i >= steps) clearInterval(t);
+    }, 50);
+  }
+
+  startMusic();
+  // retry a few times in case the browser wasn't ready yet
+  var tries = 0;
+  var retry = setInterval(function () {
+    tries++;
+    if (musicStarted && !music.paused) { clearInterval(retry); return; }
+    musicStarted = false;
+    startMusic();
+    if (tries > 10) clearInterval(retry);
+  }, 1000);
 
   var statusEl = document.getElementById('status');
   if (!SHOW_STATUS) statusEl.style.display = 'none';
@@ -141,8 +183,14 @@
   }
 
   // ---- functions Garry's Mod calls while you join ----
-  window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+  window.GameDetails = function (servername, serverurl, mapname, maxplayers, steamid, gamemode, volume) {
     setStatus('Connecting');
+    // respect the player's own GMod volume setting
+    var v = parseFloat(volume);
+    if (!isNaN(v) && v >= 0 && v <= 1) {
+      musicTarget = MUSIC_VOLUME * v;
+      if (musicStarted) { try { music.volume = musicTarget; } catch (e) {} }
+    }
   };
 
   window.SetFilesTotal = function (total) {
