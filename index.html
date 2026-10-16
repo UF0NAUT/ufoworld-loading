@@ -71,7 +71,7 @@
   #loader {
     position: absolute;
     right: 3.2%;
-    bottom: 4.5%;
+    bottom: 13%;   /* raised to clear GMod's own loading bar at the bottom */
     text-align: right;
     white-space: nowrap;
   }
@@ -128,9 +128,10 @@
 
 <script>
   // ===== easy settings =====
-  var SHOW_STATUS = true;   // false = only "UFO WORLD" + spinner, no small status line
+  var SHOW_STATUS = false;  // true = show the small status line above "UFO WORLD"
 
   var statusEl = document.getElementById('status');
+  if (!SHOW_STATUS) statusEl.style.display = 'none';
   var filesTotal = 0;
   var filesNeeded = 0;
 
